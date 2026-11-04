@@ -1,0 +1,8 @@
+# the generated "company" lives here; created by `python -m ops.setup`
+run/
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+data/
+logs/

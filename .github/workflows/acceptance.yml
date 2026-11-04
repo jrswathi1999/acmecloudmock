@@ -1,0 +1,31 @@
+# Template-repo CI for teammates' pull requests. NOT copied into the company (run/):
+# ops.setup copies only .github/workflows/ci.yml.
+name: acceptance
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  acceptance:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+      - run: pip install -r requirements.txt
+      - run: python -m pytest -q
+      - run: python -m ops.acceptance
+      - if: always()
+        run: python -m ops.deploy stop
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: company-logs-${{ matrix.os }}
+          path: run/logs/
