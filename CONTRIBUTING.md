@@ -12,6 +12,7 @@ Narc expects, and still runs on Windows, macOS and Linux.**
 4. Before you push, run:
    ```
    python -m pytest -q
+   python -m pytest ops_tests -q   # tests for the tooling: log contract and monitor rules
    python -m ops.acceptance        # ~3 min, rebuilds run/, must end with "N/N checks passed"
    ```
 5. Open a PR and fill in the template. GitHub Actions runs the acceptance suite on Windows, macOS and Linux.

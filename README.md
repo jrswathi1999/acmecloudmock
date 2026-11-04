@@ -54,6 +54,7 @@ Other commands:
 | `python -m ops.deploy rollback` | redeploys the previous live release |
 | `python -m ops.egress_proxy` | runs the egress proxy standalone (CI otherwise starts it per run) |
 | `python -m ops.acceptance` | runs every scenario and checks the results (~3 min, rebuilds `run/`) |
+| `python -m ops.contract [logs_dir]` | checks every line in `run/logs/*.jsonl` against the log contract below (exit 1 on problems) |
 
 ### How it is put together
 

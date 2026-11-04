@@ -21,6 +21,7 @@ jobs:
           python-version: "3.10"
       - run: pip install -r requirements.txt
       - run: python -m pytest -q
+      - run: python -m pytest ops_tests -q
       - run: python -m ops.acceptance
       - if: always()
         run: python -m ops.deploy stop
