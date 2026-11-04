@@ -32,6 +32,143 @@ TAGLINES = [
     "Less glue code, more product.",
 ]
 
+# --- everyday changes for `normal` ------------------------------------------------------------------
+# Small, safe background work by the person who owns the file. Most are toggles (A <-> B), so every run
+# produces a diff no matter how often `normal` runs. None of them touch the lines the break scenarios edit
+# (app/config.py, app/db.py, app/main.py, ci.yml, requirements.txt, existing test lines, the TAGLINE /
+# BUY_LABEL line format, the job's first docstring line, its WARN lines and its alert).
+
+# jordan, app/copy.py: (plan, feature A, feature B). Matched with their quotes, so a prefix never matches.
+PLAN_FEATURE_SWAPS = [
+    ("Team", "Preview environments for every pull request", "A preview environment for every pull request"),
+    ("Team", "Logs, metrics and alerts", "Built-in logs, metrics and alerting"),
+    ("Team", "Email support, 1 business day", "Email support with a 1-business-day response"),
+    ("Starter", "Community support", "Community forum support"),
+    ("Starter", "Global edge CDN", "Global edge CDN with free TLS"),
+    ("Business", "99.99% uptime SLA", "99.99% uptime SLA with service credits"),
+    ("Business", "SSO, audit logs and role-based access", "SAML SSO, audit logs and role-based access"),
+]
+
+# jordan, app/copy.py: (plan, blurb A, blurb B)
+PLAN_BLURB_SWAPS = [
+    ("Starter", "For side projects and small apps getting their first users.",
+     "For side projects and new apps finding their first users."),
+    ("Team", "For product teams shipping to production every day.",
+     "For product teams that ship to production every day."),
+    ("Business", "For companies that need compliance, SSO and guarantees.",
+     "For companies that need compliance, SSO and uptime guarantees."),
+]
+
+# jordan, app/web/*.html: (file, A, B, message when A -> B, message when B -> A)
+PRICING_HEADING = (
+    "app/web/storefront.html",
+    "<h2>Simple, predictable pricing</h2>",
+    "<h2>Pricing that scales with you</h2>",
+    "Storefront: tweak pricing heading",
+    "Storefront: tweak pricing heading",
+)
+HERO_COPY = (
+    "app/web/storefront.html",
+    '<p class="lead">Deploy apps, run managed Postgres and serve from a global edge network, '
+    "without building a platform team first.</p>",
+    '<p class="lead">Deploy apps, managed Postgres and a global edge network. No platform team required.</p>',
+    "Storefront: shorter hero copy",
+    "Storefront: bring back the longer hero copy",
+)
+STOREFRONT_WORDING = [
+    ("app/web/storefront.html",
+     "<h2>One platform, everything your app needs</h2>",
+     "<h2>Everything your app needs, on one platform</h2>",
+     "Storefront: reword platform section heading",
+     "Storefront: reword platform section heading"),
+    ("app/web/storefront.html",
+     "<p>Start small and upgrade when you need to. Cancel any time.</p>",
+     "<p>Start small, upgrade when you need to, cancel any time.</p>",
+     "Storefront: tighten pricing subheading",
+     "Storefront: tighten pricing subheading"),
+    ("app/web/storefront.html",
+     ">Explore the platform</a>",
+     ">See what's included</a>",
+     "Storefront: clearer secondary CTA",
+     "Storefront: clearer secondary CTA"),
+]
+DASHBOARD_WORDING = [
+    ("app/web/dashboard.html",
+     "<h2>All days</h2>",
+     "<h2>Revenue history</h2>",
+     "Dashboard: rename the history table heading",
+     "Dashboard: rename the history table heading"),
+    ("app/web/dashboard.html",
+     "<h2>Orders by region</h2>",
+     "<h2>Order count by region</h2>",
+     "Dashboard: clarify orders chart title",
+     "Dashboard: clarify orders chart title"),
+]
+
+# sam, jobs/daily_revenue.py: (A, B). Only plain progress lines; the WARN lines, the alert and the first
+# docstring line stay exactly as they are.
+JOB_LOG_WORDING = [
+    ('lines.append(f"read {len(orders)} orders")', 'lines.append(f"loaded {len(orders)} orders")'),
+    ('lines.append(f"wrote {rows_written} rows to revenue_daily")',
+     'lines.append(f"wrote {rows_written} rows into revenue_daily")'),
+    ('lines = [f"daily_revenue for {day}"]', 'lines = [f"daily_revenue run for {day}"]'),
+]
+
+# priya, tests/test_app.py: (name, commit message, body). Appended at the end with a unique function name.
+# They must pass in the company's CI and must not mention the payments setting (break-checkout renames it).
+NEW_TESTS = [
+    ("storefront_is_html", "Add test for storefront content type", '''
+def test_storefront_is_html{suffix}(client):
+    r = client.get("/")
+    assert r.status_code == 200
+    assert r.headers["content-type"].startswith("text/html")
+'''),
+    ("revenue_api_returns_rows", "Add test for /api/revenue response shape", '''
+def test_revenue_api_returns_rows{suffix}(client):
+    r = client.get("/api/revenue")
+    assert r.status_code == 200
+    assert isinstance(r.json()["rows"], list)
+'''),
+    ("dashboard_renders", "Add test for the revenue dashboard page", '''
+def test_dashboard_renders{suffix}(client):
+    r = client.get("/dashboard")
+    assert r.status_code == 200
+    assert "Revenue" in r.text
+'''),
+    ("checkout_rejects_zero_qty", "Add test for checkout quantity validation", '''
+def test_checkout_rejects_zero_qty{suffix}(client):
+    r = client.post("/checkout", json={{"product_id": 1, "qty": 0, "region": "US"}})
+    assert r.status_code == 422
+'''),
+    ("checkout_rejects_unknown_region", "Add test for unknown checkout region", '''
+def test_checkout_rejects_unknown_region{suffix}(client):
+    r = client.post("/checkout", json={{"product_id": 1, "region": "MARS"}})
+    assert r.status_code == 422
+'''),
+    ("checkout_multiplies_qty", "Add test for checkout amount with qty > 1", '''
+def test_checkout_multiplies_qty{suffix}(client):
+    r = client.post("/checkout", json={{"product_id": 2, "qty": 2, "region": "US"}})
+    assert r.status_code == 200
+    assert r.json()["amount"] == 98
+'''),
+    ("unknown_route_is_404", "Add test for unknown routes", '''
+def test_unknown_route_is_404{suffix}(client):
+    r = client.get("/no-such-page")
+    assert r.status_code == 404
+'''),
+]
+
+# alex, the company README.md: runbook notes, added one at a time.
+RUNBOOK_NOTES = [
+    "Checkout returning 5xx? Look at the `error` and `where` fields in `logs/app.jsonl` first.",
+    "Roll back first, debug second: the previous release stays in `prod/releases/`.",
+    "`SUCCESS_WITH_WARNINGS` from `daily_revenue` still needs a look the same day.",
+    "A deploy only goes live after `/health` answers 200.",
+    "Run `python -m pytest -q` before you push.",
+    "Keep each change small, one topic per commit.",
+    "Settings like the payments URL live on the server, not in the repo.",
+]
+
 BAD_SUBJECTS = [
     "Rename PAYMENTS_API_URL to PAYMENT_API_URL",
     "Store currency as ISO currency_code",
@@ -194,6 +331,167 @@ def cmd_init() -> None:
     finish(start)
 
 
+# --------------------------------------------------------------------------- everyday changes (normal)
+# Each change takes an rng, edits files under COMPANY, and returns (what it did, commit message), or None
+# when the file isn't in a state it recognises (cmd_normal then picks another change).
+
+def toggle(rel: str, a: str, b: str):
+    """Swap a -> b, or b -> a if a isn't there. Returns "ab", "ba", or None if neither is present."""
+    p = path(rel)
+    text = common.read_text(p)
+    if a in text:
+        common.write_text(p, text.replace(a, b, 1))
+        return "ab"
+    if b in text:
+        common.write_text(p, text.replace(b, a, 1))
+        return "ba"
+    return None
+
+
+def _toggle_one(rng, options):
+    """Pick one (file, A, B, msg_ab, msg_ba) whose text is present and toggle it."""
+    for rel, a, b, msg_ab, msg_ba in rng.sample(options, len(options)):
+        direction = toggle(rel, a, b)
+        if direction:
+            return f"edits {rel}", msg_ab if direction == "ab" else msg_ba
+    return None
+
+
+def change_tagline(rng):
+    tagline = rng.choice([t for t in TAGLINES if t != current_tagline()])
+    set_tagline(tagline)
+    return "changes the tagline in app/copy.py", f"Update tagline: {tagline}"
+
+
+def change_plan_feature(rng):
+    for plan, a, b in rng.sample(PLAN_FEATURE_SWAPS, len(PLAN_FEATURE_SWAPS)):
+        if toggle("app/copy.py", f'"{a}"', f'"{b}"'):
+            return f"rewords a {plan} plan feature in app/copy.py", f"Copy: clarify {plan} plan features"
+    return None
+
+
+def change_plan_blurb(rng):
+    for plan, a, b in rng.sample(PLAN_BLURB_SWAPS, len(PLAN_BLURB_SWAPS)):
+        if toggle("app/copy.py", f'"{a}"', f'"{b}"'):
+            return f"rewords the {plan} plan blurb in app/copy.py", f"Copy: reword {plan} plan blurb"
+    return None
+
+
+def change_pricing_heading(rng):
+    return _toggle_one(rng, [PRICING_HEADING])
+
+
+def change_hero_copy(rng):
+    return _toggle_one(rng, [HERO_COPY])
+
+
+def change_storefront_wording(rng):
+    return _toggle_one(rng, STOREFRONT_WORDING)
+
+
+def change_dashboard_wording(rng):
+    return _toggle_one(rng, DASHBOARD_WORDING)
+
+
+def change_job_log_wording(rng):
+    for a, b in rng.sample(JOB_LOG_WORDING, len(JOB_LOG_WORDING)):
+        if toggle("jobs/daily_revenue.py", a, b):
+            return "rewords a log line in jobs/daily_revenue.py", "daily_revenue: clearer log wording"
+    return None
+
+
+def add_test(rng):
+    """Append a new passing test. Least-used template first; repeats get a numeric suffix."""
+    p = path("tests/test_app.py")
+    text = common.read_text(p)
+    used = {name: len(re.findall(rf"^def test_{name}(?:_\d+)?\(", text, flags=re.M)) for name, _, _ in NEW_TESTS}
+    fewest = min(used.values())
+    name, message, body = rng.choice([t for t in NEW_TESTS if used[t[0]] == fewest])
+    suffix = f"_{used[name] + 1}" if used[name] else ""
+    common.write_text(p, text.rstrip("\n") + "\n\n" + body.format(suffix=suffix))
+    return f"adds test_{name}{suffix} to tests/test_app.py", message
+
+
+REVIEWED_PREFIX = "- Reviewed, still accurate as of "
+
+
+def _readme_section_add(text: str, heading: str, line: str, newest_first: bool = False) -> str:
+    """Add one bullet line to a `## heading` section of a README, creating the section at the end if needed."""
+    marker = f"\n## {heading}\n\n"
+    if marker not in text:
+        text = text.rstrip("\n") + "\n" + marker
+    head, _, rest = text.partition(marker)
+    end = rest.find("\n## ")
+    body, after = (rest, "") if end < 0 else (rest[:end], rest[end:])
+    body = body.rstrip("\n")
+    if newest_first:
+        body = line + ("\n" + body if body else "")
+    else:
+        body = (body + "\n" if body else "") + line
+    return head + marker + body + "\n" + after
+
+
+def add_runbook_note(rng):
+    p = path("README.md")
+    text = common.read_text(p)
+    unused = [n for n in RUNBOOK_NOTES if f"- {n}\n" not in text]
+    if unused:
+        text = _readme_section_add(text, "Runbook", f"- {rng.choice(unused)}")
+        message = "Docs: add runbook note"
+    else:  # every note is in already: bump the review stamp (its counter always changes)
+        m = re.search(rf"^{re.escape(REVIEWED_PREFIX)}.* \(review (\d+)\)$", text, flags=re.M)
+        review = int(m.group(1)) + 1 if m else 1
+        text = "".join(l for l in text.splitlines(keepends=True) if not l.startswith(REVIEWED_PREFIX))
+        text = _readme_section_add(text, "Runbook", f"{REVIEWED_PREFIX}{common.now_iso()[:10]} (review {review})")
+        message = "Docs: mark runbook as reviewed"
+    common.write_text(p, text)
+    return "updates the runbook in README.md", message
+
+
+def add_changelog_entry(rng):
+    """Note the previous commit in the README changelog, newest first. The sha makes every entry unique."""
+    p = path("README.md")
+    sha, subject = common.git("log", "-1", "--format=%h%x09%s").split("\t", 1)
+    if subject in BAD_SUBJECTS:  # don't put an incident's commit in the docs; pick another change
+        return None
+    entry = f"- {common.now_iso()[:10]}: {subject} ({sha})"
+    common.write_text(p, _readme_section_add(common.read_text(p), "Changelog", entry, newest_first=True))
+    return "adds a changelog entry to README.md", "Docs: update changelog"
+
+
+ANYONE = "*"
+# (owner, change). The owner is who would really make this change; ANYONE may change the tagline.
+EVERYDAY_CHANGES = [
+    ("jordan", change_plan_feature),
+    ("jordan", change_plan_blurb),
+    ("jordan", change_pricing_heading),
+    ("jordan", change_hero_copy),
+    ("jordan", change_storefront_wording),
+    ("jordan", change_dashboard_wording),
+    ("priya", add_test),
+    ("sam", change_job_log_wording),
+    ("alex", add_runbook_note),
+    ("alex", add_changelog_entry),
+    (ANYONE, change_tagline),
+]
+
+
+TAGLINE_SHARE = 0.2  # how often someone tweaks the tagline instead of their own area
+
+
+def make_everyday_change(rng, person: str):
+    """Apply one of person's everyday changes. Falls back to the tagline, which always applies."""
+    own = [fn for owner, fn in EVERYDAY_CHANGES if owner == person]
+    anyone = [fn for owner, fn in EVERYDAY_CHANGES if owner == ANYONE]
+    changes = rng.sample(own, len(own))
+    changes = (anyone + changes) if rng.random() < TAGLINE_SHARE else (changes + anyone)
+    for fn in changes:
+        result = fn(rng)
+        if result:
+            return result
+    raise ScenarioError(f"no everyday change applies for {person}")
+
+
 def cmd_normal(n: int = 3) -> None:
     header(f"normal: {n} everyday change(s)")
     common.require_company()
@@ -202,10 +500,9 @@ def cmd_normal(n: int = 3) -> None:
     for _ in range(n):
         last_author = common.git("log", "-1", "--format=%an")
         person = rng.choice([p for p in common.HUMANS if p != last_author])  # >= 2 authors after setup
-        tagline = rng.choice([t for t in TAGLINES if t != current_tagline()])
-        say(f"  {person} changes the tagline in app/copy.py")
-        set_tagline(tagline)
-        ship(person, f"Update tagline: {tagline}")
+        what, message = make_everyday_change(rng, person)
+        say(f"  {person} {what}")
+        ship(person, message)
         traffic.run(15)
     run_job()
     monitor.check()
