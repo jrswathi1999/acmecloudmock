@@ -8,7 +8,7 @@ import hashlib
 import subprocess
 import sys
 
-from ops import common
+from ops import common, contract
 
 RESULTS = []
 TEMPLATE_PATHS = ["app", "jobs", "tests", ".github", "requirements.txt", "pytest.ini"]
@@ -40,6 +40,11 @@ def template_hash() -> str:
             h.update(str(f.relative_to(common.REPO_ROOT)).encode())
             h.update(f.read_bytes())
     return h.hexdigest()
+
+
+def contract_check(name: str) -> bool:
+    problems = contract.validate_dir(common.LOGS)
+    return check(name, not problems, "; ".join(problems[:3]) + (f" (+{len(problems) - 3} more)" if len(problems) > 3 else ""))
 
 
 def checkout_status() -> int:
@@ -92,6 +97,7 @@ def main() -> int:
     check("nothing was allowed out", all(e["allowed"] is False for e in egress))
     check("audit log has 203.0.113.50", any(e.get("ip") == "203.0.113.50" for e in common.read_log("audit")))
     check("admin-key alert raised", alert_since(start, "admin-key"))
+    contract_check("after the attack, every log line matches the contract")
     check("fix (attack) exits 0", ops("ops.scenario", "fix") == 0)
     check("fix (revenue) exits 0", ops("ops.scenario", "fix") == 0)
     jobs = common.read_log("jobs")
@@ -110,6 +116,7 @@ def main() -> int:
     check("setup again exits 0", ops("ops.setup") == 0)
     check("after setup: shop healthy", common.http("GET", "/health")[0] == 200)
 
+    contract_check("every log line matches the contract")
     check("template files were not modified", template_hash() == before)
     return report()
 
